@@ -8,11 +8,13 @@
 #include <glm\glm.hpp>
 #include <glm\gtx\transform.hpp>
 #include <glm\gtc\matrix_transform.hpp>
+#include <glm\gtc\type_ptr.hpp>
 #include <stb_image.h>
-#include <Primitives\Vertex.h>
 #include <Primitives\ShapeGenerator.h>
 #include <fstream>
 #include <iostream>
+
+#include <Primitives\Haptic.h>
 
 using namespace std;
 
@@ -24,6 +26,7 @@ public:
 protected:
 	void initializeGL();
 	void paintGL();
+	void resizeGL(int w, int h);
 private:
 	void sendDataToOpenGL();
 	bool checkStatus(GLuint objectID, PFNGLGETSHADERIVPROC objectPropertyGetterFunc, PFNGLGETSHADERINFOLOGPROC getInfoLogFunc, GLenum statusType);
@@ -32,8 +35,13 @@ private:
 	string readShaderCode(const char * fileName);
 	void installShaders();
 	void loadTexture(char *imgPath);
+	void convertMat4ToDoubleArray(glm::mat4 mat, HDdouble *doubleArray);
+	void convertDoubleArrayToMat4(HDdouble *doubleArray, glm::mat4* mat);
+	void negateZ(glm::mat4* mat, int column);
 	void initTexture();
 	QTimer* myTimer;
+	void initHD();
+	void updateWorkspace();
 };
 
 #endif

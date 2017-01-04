@@ -8,16 +8,11 @@
 #define SCALE_IPHONE_HEIGHT() 1.0f
 #define SCALE_IPHONE_DEPTH() 1.0f / IPHONE_HEIGHT * IPHONE_DEPTH
 
-GLuint theBufferID;
+using glm::vec3;
+using glm::mat4;
 
 GLuint cubeNumIndices;
 GLuint sphereNumIndices;
-
-GLuint cubeVertexArrayObjectID;
-GLuint sphereVertexArrayObjectID;
-
-GLuint cubeIndexByteOffset;
-GLuint sphereIndexByteOffset;
 
 GLuint programID;
 GLuint sphereProgramID;
@@ -25,58 +20,61 @@ GLuint sphereProgramID;
 GLuint texture2D_front;
 GLuint texture2D_back;
 
-using glm::vec3;
-using glm::mat4;
+GLuint cubeVertexBuffer;
+GLuint cubeIndexBuffer;
+GLuint cubeUVBuffer;
+
+GLuint sphereVertexBuffer;
+GLuint sphereIndexBuffer;
+
+mat4 projectionMatrix;
+mat4 viewMatrix;
 
 void MeGlWindow::sendDataToOpenGL()
 {
 	ShapeData cube = ShapeGenerator::makeCube();
 	ShapeData sphere = ShapeGenerator::makeSphere(40);
 
-	glGenBuffers(1, &theBufferID);
-	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
-	glBufferData(GL_ARRAY_BUFFER,
-		cube.vertexBufferSize() + cube.indexBufferSize() +
-		sphere.vertexBufferSize() + sphere.indexBufferSize(), 0, GL_STATIC_DRAW);
+	// Generate and bind vertex array object
+	GLuint vertexArrayObject;
+	glGenVertexArrays(1, &vertexArrayObject);
+	glBindVertexArray(vertexArrayObject);
 
-	GLsizeiptr currentOffset = 0;
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.vertexBufferSize(), cube.vertices);
-	currentOffset += cube.vertexBufferSize();
-	cubeIndexByteOffset = currentOffset;
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, cube.indexBufferSize(), cube.indices);
-	currentOffset += cube.indexBufferSize();
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, sphere.vertexBufferSize(), sphere.vertices);
-	currentOffset += sphere.vertexBufferSize();
-	sphereIndexByteOffset = currentOffset;
-	glBufferSubData(GL_ARRAY_BUFFER, currentOffset, sphere.indexBufferSize(), sphere.indices);
-	currentOffset += sphere.indexBufferSize();
+	/* ------------------------ make cube buffers ------------------------ */
+	// Generate, bind and send data to cube vertices buffer
+	glGenBuffers(1, &cubeVertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, cube.vertexBufferSize(), cube.vertices, GL_STATIC_DRAW);
 
+	// Generate, bind, and send data to uv buffer
+	glGenBuffers(1, &cubeUVBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, cubeUVBuffer);
+	glBufferData(GL_ARRAY_BUFFER, cube.uvBufferSize(), cube.uvs, GL_STATIC_DRAW);
+
+	// Generate, bind and send data to cube indices buffer
+	glGenBuffers(1, &cubeIndexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, cube.indexBufferSize(), cube.indices, GL_STATIC_DRAW);
+
+	// Save the number of indices for later drawing
 	cubeNumIndices = cube.numIndices;
-	sphereNumIndices = sphere.numIndices;
-
-	glGenVertexArrays(1, &cubeVertexArrayObjectID);
-	glGenVertexArrays(1, &sphereVertexArrayObjectID);
-
-	glBindVertexArray(cubeVertexArrayObjectID);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float)* 8, 0);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float)* 8, (void*)(6*sizeof(float)));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
-
-	glBindVertexArray(sphereVertexArrayObjectID);
-	glEnableVertexAttribArray(0);
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, theBufferID);
-	GLuint sphereByteOffset = cube.vertexBufferSize() + cube.indexBufferSize();
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float)* 8, (void*)sphereByteOffset);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(float)* 8, (void*)(sphereByteOffset + sizeof(float)* 3));
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, theBufferID);
-
-	cout << "Number of vertices per Sphere: " << sphere.numVertices;
-
+	// Clean up the cube ShapeData
 	cube.cleanup();
+
+	/* ------------------------ make visitor sphere buffers ------------------------ */
+	// Generate, bind and send data to sphere vertices buffer
+	glGenBuffers(1, &sphereVertexBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, sphereVertexBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sphere.vertexBufferSize(), sphere.vertices, GL_DYNAMIC_DRAW);
+
+	// Generate, bind and send data to sphere indices buffer (since the sphere doesn't have texture, there's no uv buffer for it)
+	glGenBuffers(1, &sphereIndexBuffer);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereIndexBuffer);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sphere.indexBufferSize(), sphere.indices, GL_DYNAMIC_DRAW);
+
+	// Save the number of indices for later drawing
+	sphereNumIndices = sphere.numIndices;
+	// Clean up the sphere ShapeData
 	sphere.cleanup();
 }
 
@@ -165,6 +163,8 @@ void MeGlWindow::installShaders()
 		return;
 	}
 
+	glDetachShader(programID, vertexShaderID);
+	glDetachShader(programID, fragmentShaderID);
 	glDeleteShader(vertexShaderID);
 	glDeleteShader(fragmentShaderID);
 
@@ -193,6 +193,8 @@ void MeGlWindow::installShaders()
 	if (!checkProgramStatus(sphereProgramID))
 		return;
 
+	glDetachShader(sphereProgramID, vertexShaderID);
+	glDetachShader(sphereProgramID, fragmentShaderID);
 	glDeleteShader(vertexShaderID);
 	glDeleteShader(fragmentShaderID);
 }
@@ -219,10 +221,99 @@ void MeGlWindow::loadTexture(char *imgPath)
 	stbi_image_free(img);
 }
 
+void MeGlWindow::convertMat4ToDoubleArray(glm::mat4 mat, HDdouble *doubleArray)
+{
+	const float *pSource = (const float*)glm::value_ptr(mat);
+	for (int i = 0; i < 16; ++i)
+	{
+		doubleArray[i] = pSource[i];
+	}
+}
+
+void MeGlWindow::convertDoubleArrayToMat4(HDdouble *doubleArray, glm::mat4* mat)
+{
+	float pSource[16] = { 0.0 };
+
+	for (int i = 0; i < 16; ++i)
+	{
+		pSource[i] = (float)doubleArray[i];
+	}
+
+	(*mat) = glm::make_mat4(pSource);
+
+}
+
+void MeGlWindow::negateZ(glm::mat4* mat, int column)
+{
+	for (int i = 0; i < 4; i++)
+	{
+		(*mat)[i][column] *= -1;
+	}
+}
+
+HDCallbackCode HDCALLBACK touchScene(void *pUserData)
+{
+	hdBeginFrame(ghHD);
+	hdEndFrame(ghHD);
+	return HD_CALLBACK_CONTINUE;
+}
+
+HDCallbackCode HDCALLBACK copyHapticDisplayState(void *pUserData)
+{
+	HapticDisplayState *pState = (HapticDisplayState *)pUserData;
+
+	hdGetDoublev(HD_CURRENT_POSITION, pState->position);
+	hdGetDoublev(HD_CURRENT_TRANSFORM, pState->transform);
+
+	return HD_CALLBACK_DONE;
+}
+
+void MeGlWindow::initHD()
+{
+	HDErrorInfo error;
+	ghHD = hdInitDevice(HD_DEFAULT_DEVICE);
+	if (HD_DEVICE_ERROR(error = hdGetError()))
+	{
+		hduPrintError(stderr, &error, "Failed to initialize haptic device");
+		exit(-1);
+	}
+
+	hdEnable(HD_FORCE_OUTPUT);
+
+	hUpdateDeviceCallback = hdScheduleAsynchronous(touchScene, 0, 
+		HD_MAX_SCHEDULER_PRIORITY);
+
+	hdStartScheduler();
+	if (HD_DEVICE_ERROR(error = hdGetError()))
+	{
+		hduPrintError(stderr, &error, "Failed to start the scheduler");
+		exit(-1);
+	}
+}
+
+void MeGlWindow::updateWorkspace()
+{
+	HDdouble screenTworkspace;
+	GLdouble modelview[16];
+	GLdouble projection[16];
+	GLint viewport[4];
+
+	convertMat4ToDoubleArray(viewMatrix, modelview);
+	convertMat4ToDoubleArray(projectionMatrix, projection);
+	glGetIntegerv(GL_VIEWPORT, viewport);
+
+	hduMapWorkspaceModel(modelview, projection, workspaceModel);
+
+	screenTworkspace = hduScreenToWorkspaceScale(
+		modelview, projection, viewport, workspaceModel);
+
+	gCursorScale = kCursorScreenSize * screenTworkspace;
+}
+
 MeGlWindow::MeGlWindow()
 {
-	setMinimumSize(1024, 768);
-
+	setMinimumSize(1024, 1024);
+	
 	myTimer = new QTimer();
 	connect(myTimer, SIGNAL(timeout()), this, SLOT(update()));
 	myTimer->start(30);
@@ -240,55 +331,135 @@ void MeGlWindow::initializeGL()
 {
 	glewInit();
 	glEnable(GL_DEPTH_TEST);
+	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
 	sendDataToOpenGL();
 	installShaders();
-	glClearColor(1.0f, 1.0f, 1.0f, 0.0f);
+	initHD();
 }
 
 void MeGlWindow::paintGL()
 {
 	glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-	glViewport(0, 0, width(), height());
 
-	mat4 projectionMatrix = glm::perspective(60.0f, (float)width() / height(), 0.1f, 10.0f);
-
-	mat4 scalingMatrix =
-		glm::scale(vec3(SCALE_IPHONE_WIDTH(), SCALE_IPHONE_HEIGHT(), SCALE_IPHONE_DEPTH()));
+	// Common matrices (projection and scaling)
+	mat4 scalingMatrix = glm::scale(vec3(SCALE_IPHONE_WIDTH(), SCALE_IPHONE_HEIGHT(), SCALE_IPHONE_DEPTH()));
 	
-	// front of the phone
+	/* ------------------------ front of the phone ------------------------ */
+	// Use the shader for cube rendering with texture
 	glUseProgram(programID);
-	glBindVertexArray(cubeVertexArrayObjectID);
 	
-	mat4 translationMatrix = glm::translate(vec3(-0.75f, 0.0f, -2.0f));
-	mat4 rotationMatrix = glm::rotate(0.0f, vec3(1.0f, 0.0f, 0.0f));
-	mat4 fullTransformMatrix = projectionMatrix * translationMatrix * rotationMatrix * scalingMatrix;
+	// Individual matrices (translation matrix)
+	mat4 translationMatrix = glm::translate(vec3(-0.75f, 0.0f, 0.0f));
 
+	// Send full matrix to vertex shader
+	mat4 fullTransformMatrix = projectionMatrix * viewMatrix * translationMatrix * scalingMatrix;
 	GLint fullTransformMatrixUniformLocation = glGetUniformLocation(programID, "fullTransformMatrix");
 	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
-
-	loadTexture("./Resources/Images/front.png");
-	glDrawElements(GL_QUADS, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)cubeIndexByteOffset);
 	
-	// back of the phone
-	translationMatrix = glm::translate(vec3(0.75f, 0.0f, -2.0f));
-	rotationMatrix = glm::rotate(0.0f, vec3(0.0f, 1.0f, 0.0f));
-	fullTransformMatrix = projectionMatrix * translationMatrix * rotationMatrix * scalingMatrix;
+	// Load texture for the front of the phone
+	loadTexture("./Resources/Images/front.png");
 
+	// Set up array buffer pointer
+	glBindBuffer(GL_ARRAY_BUFFER, cubeVertexBuffer);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	// Set up UV buffer pointer
+	glBindBuffer(GL_ARRAY_BUFFER, cubeUVBuffer);
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	// Set up index buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cubeIndexBuffer);
+	
+	// Drawing the front of the phone
+	glDrawElements(GL_QUADS, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)0);
+	
+	/* ------------------------ back of the phone ------------------------*/
+	// Individual matrices (translation matrix)
+	translationMatrix = glm::translate(vec3(0.75f, 0.0f, 0.0f));
+	
+	// Send full matrix to the vertex shader
+	fullTransformMatrix = projectionMatrix * viewMatrix * translationMatrix * scalingMatrix;
 	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
 
+	// Load texture for back of the phone
 	loadTexture("./Resources/Images/back.png");
-	glDrawElements(GL_QUADS, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)cubeIndexByteOffset);
+	
+	// Draw the back of the phone (vertices, uv and indices have not changed in this case. No need for resetting the buffers)
+	glDrawElements(GL_QUADS, cubeNumIndices, GL_UNSIGNED_SHORT, (void*)0);
 
-	// visitor sphere
+	// Disable the vertex attribute array location because we are using a different shader for the visitor sphere later
+	glDisableVertexAttribArray(0);
+	glDisableVertexAttribArray(1);
+
+	/* ------------------------ visitor sphere ------------------------*/
+	// Haptics settings first
+	HapticDisplayState state;
+	hdScheduleSynchronous(copyHapticDisplayState, &state, HD_DEFAULT_SCHEDULER_PRIORITY);
+
+	// Use the shader for sphere rendering without texture
 	glUseProgram(sphereProgramID);
-	glBindVertexArray(sphereVertexArrayObjectID);
+	
+	// Individual matrices (translation and scale matrix)
+	scalingMatrix = glm::scale(vec3(gCursorScale, gCursorScale, gCursorScale));
 
-	translationMatrix = glm::translate(vec3(0.0f, 0.0f, -3.0f));
-	scalingMatrix = glm::scale(vec3(0.05f, 0.05f, 0.05f));
-	fullTransformMatrix = projectionMatrix * translationMatrix * scalingMatrix;
+	glm::mat4 workspaceModelMat = glm::mat4();
+	convertDoubleArrayToMat4(workspaceModel, &workspaceModelMat);
+	glm::mat4 transformMat = glm::mat4();
+	convertDoubleArrayToMat4(state.transform, &transformMat);
+
+	for (int i = 0; i < 3; i++)
+	{
+		cout << state.position[i] << " ";
+	}
+	cout << endl;
+
+	// Send full matrix to the vertex shader
+	fullTransformMatrix = workspaceModelMat * transformMat * scalingMatrix;
+	
+	negateZ(&fullTransformMatrix, 2);
 
 	fullTransformMatrixUniformLocation = glGetUniformLocation(sphereProgramID, "fullMatrix");
 	glUniformMatrix4fv(fullTransformMatrixUniformLocation, 1, GL_FALSE, &fullTransformMatrix[0][0]);
 
-	glDrawElements(GL_TRIANGLES, sphereNumIndices, GL_UNSIGNED_SHORT, (void*)sphereIndexByteOffset);
+	// Set up vertices buffer pointer
+	glBindBuffer(GL_ARRAY_BUFFER, sphereVertexBuffer);
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
+
+	// Set up indices buffer pointer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, sphereIndexBuffer);
+
+	// Draw the visitor sphere
+	glDrawElements(GL_TRIANGLES, sphereNumIndices, GL_UNSIGNED_SHORT, (void*)0);
+
+	// Disable the vertex attribute array location
+	glDisableVertexAttribArray(0);
+}
+
+void MeGlWindow::resizeGL(int w, int h)
+{
+	static const double kPI = 3.1415926535897932384626433832795;
+	static const double kFovY = 60;
+
+	double nearDist, farDist, aspect;
+	glViewport(0, 0, w, h);
+
+	nearDist = 1.0 / tan((kFovY / 2.0) * kPI / 180);
+	farDist = nearDist + 2.0f;
+	aspect = (GLfloat) w / h;
+
+	cout << "nearDist = " << nearDist << endl;
+	cout << "farDist = " << farDist << endl;
+
+	projectionMatrix = glm::perspective(kFovY, aspect, nearDist, farDist);
+
+	viewMatrix = glm::lookAt(
+		vec3(0.0f, 0.0f, nearDist + 1.0f),
+		vec3(0.0f, 0.0f, 0.0f),
+		vec3(0.0f, 1.0f, 0.0f)
+		);
+
+	updateWorkspace();
 }

@@ -1,8 +1,8 @@
 #pragma once
-#include <QtWidgets\qwidget.h>
+#include <QtWidgets\qmainwindow.h>
 #include <MeGlWindow.h>
 
-class MeMainWindow : public QWidget
+class MeMainWindow : public QMainWindow
 {
 public:
 	MeMainWindow();
