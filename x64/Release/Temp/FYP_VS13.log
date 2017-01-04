@@ -1,0 +1,19 @@
+﻿Build started 4/1/2017 6:37:13 PM.
+     1>Project "C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\FYP_VS13.vcxproj" on node 2 (Build target(s)).
+     1>ClCompile:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\CL.exe /c /IC:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\ /IC:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\Qt\include /IC:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\glew\include /IC:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\glm /IC:\OpenHaptics\Developer\3.4.0\include /IC:\OpenHaptics\Developer\3.4.0\utilities\include /Zi /nologo /W1 /WX- /O2 /Gm- /EHsc /MD /GS /fp:precise /Zc:wchar_t /Zc:forScope /Fo"x64\Release\Temp\\" /Fd"x64\Release\Temp\vc120.pdb" /Gd /TP /errorReport:prompt MeGlWindow.cpp
+         MeGlWindow.cpp
+       Link:
+         C:\Program Files (x86)\Microsoft Visual Studio 12.0\VC\bin\x86_amd64\link.exe /ERRORREPORT:PROMPT /OUT:"C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\x64\Release\FYP_VS13.exe" /NOLOGO /LIBPATH:C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\Qt\lib /LIBPATH:C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\glew\lib /LIBPATH:C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\..\Middleware\SOIL\lib /LIBPATH:C:\OpenHaptics\Developer\3.4.0\lib\x64\Release /LIBPATH:C:\OpenHaptics\Developer\3.4.0\utilities\lib\x64\Release hlu.lib hdu.lib hl.lib hd.lib opengl32.lib SOIL.lib glew32.lib Qt5Core.lib Qt5Gui.lib Qt5OpenGL.lib Qt5Widgets.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib /MANIFEST /MANIFESTUAC:"level='asInvoker' uiAccess='false'" /manifest:embed /PDB:"C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\x64\Release\FYP_VS13.pdb" /TLBID:1 /DYNAMICBASE /NXCOMPAT /IMPLIB:"C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\x64\Release\FYP_VS13.lib" /MACHINE:X64 x64\Release\Temp\Mainer.obj
+         x64\Release\Temp\MeGlWindow.obj
+         x64\Release\Temp\MeMainWindow.obj
+         x64\Release\Temp\ShapeGenerator.obj
+         SOIL.lib(stb_image_aug.obj) : MSIL .netmodule or module compiled with /GL found; restarting link with /LTCG; add /LTCG to the link command line to improve linker performance
+         Generating code
+         Finished generating code
+         FYP_VS13.vcxproj -> C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\x64\Release\FYP_VS13.exe
+     1>Done Building Project "C:\Users\WengBin\Desktop\NINGSHUANG\FYP_VS13\FYP_VS13.vcxproj" (Build target(s)).
+
+Build succeeded.
+
+Time Elapsed 00:00:03.31

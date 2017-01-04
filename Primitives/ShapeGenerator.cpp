@@ -6,25 +6,29 @@ ShapeData ShapeGenerator::makeCube()
 {
 	ShapeData ret;
 
-	Vertex stackVerts[] =
+	glm::vec3 vertexBuffer[] =
 	{
 		glm::vec3(+1.0f, +1.0f, +0.0f),	// 0
-		glm::vec3(+0.0f, +0.0f, +0.0f),
-		glm::vec2(+1.0f, +0.0f),
 		glm::vec3(+1.0f, -1.0f, +0.0f),	// 1
-		glm::vec3(+0.0f, +0.0f, +0.0f),
-		glm::vec2(+1.0f, +1.0f),
 		glm::vec3(-1.0f, -1.0f, +0.0f),	// 2
-		glm::vec3(+0.0f, +0.0f, +0.0f),
-		glm::vec2(+0.0f, +1.0f),
 		glm::vec3(-1.0f, +1.0f, +0.0f), // 3
-		glm::vec3(+0.0f, +0.0f, +0.0f),
-		glm::vec2(+0.0f, +0.0f)
 	};
 
-	ret.numVertices = NUMBER_ARRAY_ELEMENTS(stackVerts);
-	ret.vertices = new Vertex[ret.numVertices];
-	memcpy(ret.vertices, stackVerts, sizeof(stackVerts));
+	glm::vec2 uvBuffer[] = 
+	{
+		glm::vec2(+1.0f, +0.0f), // 0
+		glm::vec2(+1.0f, +1.0f), // 1
+		glm::vec2(+0.0f, +1.0f), // 2
+		glm::vec2(+0.0f, +0.0f), // 3
+	};
+
+	ret.numVertices = NUMBER_ARRAY_ELEMENTS(vertexBuffer);
+	ret.vertices = new glm::vec3[ret.numVertices];
+	memcpy(ret.vertices, vertexBuffer, sizeof(vertexBuffer));
+
+	ret.numUVs = NUMBER_ARRAY_ELEMENTS(uvBuffer);
+	ret.uvs = new glm::vec2[ret.numUVs];
+	memcpy(ret.uvs, uvBuffer, sizeof(uvBuffer));
 
 	GLushort stackIndices[] = { 0, 1, 2, 3 };
 	ret.numIndices = NUMBER_ARRAY_ELEMENTS(stackIndices);
@@ -40,15 +44,15 @@ ShapeData ShapeGenerator::makePlaneVerts(GLuint dimensions)
 	ShapeData ret;
 	ret.numVertices = dimensions * dimensions;
 	int half = dimensions / 2;
-	ret.vertices = new Vertex[ret.numVertices];
+	ret.vertices = new glm::vec3[ret.numVertices];
 	for (int i = 0; i < dimensions; i++)
 	{
 		for (int j = 0; j < dimensions; j++)
 		{
-			Vertex& thisVert = ret.vertices[i * dimensions + j];
-			thisVert.position.x = j - half;
-			thisVert.position.z = i - half;
-			thisVert.position.y = 0;
+			glm::vec3& thisVert = ret.vertices[i * dimensions + j];
+			thisVert.x = j - half;
+			thisVert.z = i - half;
+			thisVert.y = 0;
 		}
 	}
 	return ret;
@@ -95,15 +99,10 @@ ShapeData ShapeGenerator::makeSphere(GLuint tesselation)
 		{
 			double theta = -(SLICE_ANGLE / 2.0) * row;
 			size_t vertIndex = col * dimensions + row;
-			Vertex& v = ret.vertices[vertIndex];
-			v.position.x = RADIUS * cos(phi) * sin(theta);
-			v.position.y = RADIUS * sin(phi) * sin(theta);
-			v.position.z = RADIUS * cos(theta);
-			v.color.r = 1.0f;
-			v.color.g = 0.0f;
-			v.color.b = 0.0f;
-			v.texcoords.x = 0.0f;
-			v.texcoords.y = 0.0f;
+			glm::vec3& v = ret.vertices[vertIndex];
+			v.x = RADIUS * cos(phi) * sin(theta);
+			v.y = RADIUS * sin(phi) * sin(theta);
+			v.z = RADIUS * cos(theta);
 		}
 	}
 	return ret;
